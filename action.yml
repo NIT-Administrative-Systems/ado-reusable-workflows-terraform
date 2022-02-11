@@ -11,8 +11,8 @@ inputs:
     default: '0.12.31'
   iac-path:
     description: 'relative path to your IAC folder'
-    required: false
-    default: '0.12.31'
+    required: true
+    default: 'develop'
 outputs:
   terraform-outputs:
     description: "Outputs from the terraform apply"
