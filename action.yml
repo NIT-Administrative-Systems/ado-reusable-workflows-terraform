@@ -28,11 +28,15 @@ outputs:
     value: ${{ steps.tf-apply.outputs.terraform-outputs }}
 runs:
   using: "composite"
-  env:
-    AWS_ACCESS_KEY_ID: ${{ inputs.AWS_ACCESS_KEY_ID }}
-    AWS_SECRET_ACCESS_KEY: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
-    GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+
   steps:
+      - name: Setup Env
+        env:
+          AWS_ACCESS_KEY_ID: ${{ inputs.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
+          GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+        run: pwd  
+    
       - name: Checkout Code
         uses: actions/checkout@v2
 
