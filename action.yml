@@ -13,6 +13,15 @@ inputs:
     description: 'relative path to your IAC folder'
     required: true
     default: 'develop'
+  AWS_ACCESS_KEY_ID:
+    description: 'AWS Access Key ID'
+    required: true
+  AWS_SECRET_ACCESS_KEY:
+    description: 'AWS Secret Access Key'
+    required: true
+  GITHUB_TOKEN:
+    description: 'Github Token'
+    required: true
 outputs:
   terraform-outputs:
     description: "Outputs from the terraform apply"
@@ -20,7 +29,9 @@ outputs:
 runs:
   using: "composite"
   env:
-    BAB_TEST: ${{ inputs.terraform-version }}
+    AWS_ACCESS_KEY_ID: ${{ inputs.AWS_ACCESS_KEY_ID }}
+    AWS_SECRET_ACCESS_KEY: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
+    GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
   steps:
       - name: Checkout Code
         uses: actions/checkout@v2
@@ -71,7 +82,7 @@ runs:
         env:
           PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ inputs.GITHUB_TOKEN }}
           result-encoding: string
           script: |
             console.log("Context: ")
@@ -107,7 +118,7 @@ runs:
         env:
           PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ inputs.GITHUB_TOKEN }}
           result-encoding: string
           script: |
             const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
