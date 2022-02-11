@@ -19,6 +19,8 @@ outputs:
     value: ${{ steps.tf-apply.outputs.terraform-outputs }}
 runs:
   using: "composite"
+  env:
+    BAB_TEST: ${{ inputs.terraform-version }}
   steps:
       - name: Checkout Code
         uses: actions/checkout@v2
