@@ -1,0 +1,15 @@
+name: Test Composite Workflow
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: NIT-Administrative-Systems/terraform-composite-action@main
+        with:
+          run-apply: 'false'
+          iac-path: 'develop'
+          terraform-version: '0.12.31'
