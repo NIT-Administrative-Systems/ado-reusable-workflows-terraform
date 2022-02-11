@@ -37,22 +37,26 @@ runs:
 
       - name: Terraform Format
         id: fmt
+        shell: bash
         run: terraform fmt -check
 
       - name: Terraform Init
         id: init
+        shell: bash
         run: |
           cd ${{ inputs.iac-path }}
           terraform init
 
       - name: Terraform Validate
         id: validate
+        shell: bash
         run: |
           cd ${{ inputs.iac-path }}
           terraform validate -no-color
 
       - name: Terraform Plan
         id: plan
+        shell: bash
         run: |
           cd ${{ inputs.iac-path }}
           terraform plan -no-color
@@ -128,11 +132,13 @@ runs:
             
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'
+        shell: bash
         run: exit 1
 
       - name: Terraform Apply
         id: tf-apply
         if: ${{ inputs.run-apply }} == 'true'
+        shell: bash
         run: |
           cd ${{ inputs.iac-path }}
           terraform init
