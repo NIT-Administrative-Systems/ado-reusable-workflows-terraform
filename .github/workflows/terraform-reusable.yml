@@ -25,13 +25,19 @@ on:
       AWS_SECRET_ACCESS_KEY:
         description: 'AWS Secret Access Key'
         required: true
+    outputs:
+      terraform-outputs:
+        description: "The outputs from terraform apply"
+        value: ${{ jobs.terraform.outputs.output1 }}
 jobs:
-  terraform-plan:
+  terraform:
     runs-on: ubuntu-latest
     environment: ${{ needs.determine-env.outputs.Environment }}
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    outputs:
+      terraform-outputs: ${{ steps.plan.terraform-outputs }}
 
     steps:
       - name: Checkout Code
@@ -69,3 +75,12 @@ jobs:
           cd ${{ inputs.iac-path }}
           terraform plan -no-color
         continue-on-error: true
+      - name: Terraform Apply
+        id: apply
+        if: ${{ inputs.run-apply }}
+        shell: bash
+        run: |
+          cd ${{ inputs.iac-path }}
+          terraform apply -auto-approve
+          
+          echo "::set-output name=terraform-outputs::$(terraform output -json)"
