@@ -22,9 +22,6 @@ on:
       AWS_SECRET_ACCESS_KEY:
         description: 'AWS Secret Access Key'
         required: true
-      GITHUB_TOKEN:
-        description: 'Github Token'
-        required: true
 jobs:
   terraform-plan:
     needs: determine-env
