@@ -5,17 +5,17 @@ on:
     inputs:
       run-apply:
         description: 'Whether or not to run terraform apply'
-        required: true
+        required: false
         default: false
         type: boolean
       terraform-version:
         description: 'Version of terraform to use'
-        required: true
+        required: false
         default: '0.12.31'
         type: string
       iac-path:
         description: 'relative path to your IAC folder'
-        required: true
+        required: false
         default: 'iac/develop'
         type: string
     secrets:
@@ -27,7 +27,6 @@ on:
         required: true
 jobs:
   terraform-plan:
-    needs: determine-env
     runs-on: ubuntu-latest
     environment: ${{ needs.determine-env.outputs.Environment }}
     env:
