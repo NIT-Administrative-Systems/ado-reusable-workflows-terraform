@@ -55,7 +55,6 @@ jobs:
         run: |
             ls
             pwd
-            cat comment-id
         
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
