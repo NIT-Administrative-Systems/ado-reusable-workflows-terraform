@@ -54,6 +54,7 @@ jobs:
       - name: test cache
         run: |
             ls
+            pwd
             cat comment-id
         
       - name: Setup Terraform
@@ -153,6 +154,11 @@ jobs:
         if: steps.plan.outcome == 'failure'
         run: exit 1
 
+      - name: test cache End
+        run: |
+            ls
+            pwd
+           
       - name: Terraform Apply
         id: apply
         if: ${{ inputs.run-apply }}
