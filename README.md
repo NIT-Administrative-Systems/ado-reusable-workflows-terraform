@@ -1,2 +1,2 @@
-# terraform-composite-action
-Composite action to perform all the NU terraform steps
+# ado-reusable-workflows
+This repo is for storing and sharing reusable workflows produced for ADO EACD
