@@ -92,6 +92,7 @@ jobs:
             try {
               commentId = await fs.readFileSync('comment-id', 'utf8')
             } catch (err) {
+              console.log("err = " + err)
               return 
             }
             console.log("Comment Id: " + commentId)
