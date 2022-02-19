@@ -48,7 +48,7 @@ jobs:
         uses: actions/cache@v2.1.7
         with:
           path: comment-id
-          key: pr-comment-id
+          key: pr-${{ github.event.number }}-comment-id
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
