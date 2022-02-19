@@ -148,7 +148,7 @@ jobs:
               body: output
             })
             console.log('Create comment Comment Id: ' + result.data.id)
-            await exec.exec('echo ', [result.data.id, '>', './comment-cache/comment-id']);
+            return result.data.id
       - name: Terraform Status
         if: steps.plan.outcome == 'failure'
         run: exit 1
@@ -157,9 +157,9 @@ jobs:
         run: |
             ls
             pwd
-            mkdir comment-cache
+            mkdir -p comment-cache
             cd comment-cache
-            echo 1045564354 > comment-id
+            echo ${{ steps.update-pr-comment.outputs.result }} > comment-id
             ls
            
       - name: Terraform Apply
