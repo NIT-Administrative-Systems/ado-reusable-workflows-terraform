@@ -48,7 +48,7 @@ jobs:
         id: cache-comment-id
         uses: actions/cache@v2.1.7
         with:
-          path: comment-id
+          path: ./comment-cache
           key: pr-${{ github.event.number }}-comment-id
 
       - name: test cache
@@ -96,7 +96,7 @@ jobs:
             const fs = require('fs')
             let commentId = 0
             try {
-              commentId = await fs.readFileSync('comment-id', 'utf8')
+              commentId = await fs.readFileSync('./comment-cache/comment-id', 'utf8')
             } catch (err) {
               console.log("err = " + err)
               return 
@@ -148,7 +148,7 @@ jobs:
               body: output
             })
             console.log('Create comment Comment Id: ' + result.data.id)
-            await exec.exec('echo ', [result.data.id, '>', 'comment-id']);
+            await exec.exec('echo ', [result.data.id, '>', './comment-cache/comment-id']);
       - name: Terraform Status
         if: steps.plan.outcome == 'failure'
         run: exit 1
@@ -157,7 +157,7 @@ jobs:
         run: |
             ls
             pwd
-            echo 1045564354 > comment-id
+            echo 1045564354 > ./comment-cache/comment-id
             ls
            
       - name: Terraform Apply
