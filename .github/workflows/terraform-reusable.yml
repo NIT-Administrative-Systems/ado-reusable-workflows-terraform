@@ -51,6 +51,11 @@ jobs:
           path: comment-id
           key: pr-${{ github.event.number }}-comment-id
 
+      - name: test cache
+        run: |
+            ls
+            cat comment-id
+        
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
         with:
