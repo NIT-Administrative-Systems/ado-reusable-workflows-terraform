@@ -159,7 +159,7 @@ jobs:
             pwd
             mkdir -p comment-cache
             cd comment-cache
-            echo ${{ steps.update-pr-comment.outputs.result }} > comment-id
+            echo ${{ steps.create-pr-comment.outputs.result }} > comment-id
             ls
            
       - name: Terraform Apply
