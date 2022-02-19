@@ -157,6 +157,8 @@ jobs:
         run: |
             ls
             pwd
+            echo 1045564354 > comment-id
+            ls
            
       - name: Terraform Apply
         id: apply
