@@ -157,7 +157,9 @@ jobs:
         run: |
             ls
             pwd
-            echo 1045564354 > ./comment-cache/comment-id
+            mkdir comment-cache
+            cd comment-cache
+            echo 1045564354 > comment-id
             ls
            
       - name: Terraform Apply
