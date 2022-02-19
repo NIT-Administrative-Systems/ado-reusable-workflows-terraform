@@ -76,7 +76,7 @@ jobs:
           terraform plan -no-color
         continue-on-error: true
       - name: Update PR Comment with Plan
-        if: steps.cache-comment-id.outputs.cache-hit == 'true'
+        if: steps.cache-comment-id.outputs.cache-hit == 'true' && github.event_name == 'pull_request'
         id: update-pr-comment
         uses: actions/github-script@v5
         env:
@@ -114,7 +114,7 @@ jobs:
                body: output
             })
       - name: Create PR Comment with Plan
-        if: steps.cache-comment-id.outputs.cache-hit != 'true'
+        if: steps.cache-comment-id.outputs.cache-hit != 'true' && github.event_name == 'pull_request'
         id: create-pr-comment
         uses: actions/github-script@v5
         env:
