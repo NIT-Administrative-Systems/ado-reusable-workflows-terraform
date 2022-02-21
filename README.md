@@ -1,4 +1,4 @@
-# ado-reusable-workflows
+# ado-terraform-reusable-workflows
 Repository for storing and sharing reusable workflows produced for ADO EACD
 
 
