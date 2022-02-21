@@ -21,7 +21,7 @@ Create a workflow `.yml` file in your repositories `.github/workflows` directory
 ### Inputs
 
 * `run-apply` - (optional) Whether or not to run terraform apply as part of the process. Defaults to false
-* `terraform-version` - (optional) Version of terraform to use. Defaults to '0.12.31'
+* `terraform-version` - (required) Version of terraform to use. 
 * `iac-path` - (optional) Path to your folder for of your terraform module. Defaults to 'iac/dev'
 
 ### Secrets
