@@ -47,6 +47,7 @@ jobs:
     with:
       iac-path: 'iac/dev'
       run-apply: false
+      terraform-version: '0.12.31'
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.TF_KEY_ADO_NONPROD }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_SECRET_ADO_NONPROD }}
