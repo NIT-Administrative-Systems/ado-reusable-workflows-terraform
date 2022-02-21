@@ -10,8 +10,7 @@ on:
         type: boolean
       terraform-version:
         description: 'Version of terraform to use'
-        required: false
-        default: '0.12.31'
+        required: true
         type: string
       iac-path:
         description: 'relative path to your IAC folder'
