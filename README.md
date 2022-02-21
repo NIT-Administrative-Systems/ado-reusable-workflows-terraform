@@ -1,4 +1,4 @@
-# ado-terraform-reusable-workflows
+# ado-reusable-terraform-workflows
 Repository for storing and sharing reusable workflows produced for ADO EACD
 
 
@@ -43,7 +43,7 @@ on:
 
 jobs:      
   terraform:
-    uses: nit-administrative-systems/ado-terraform-reusable-workflow/.github/workflows/terraform-reusable.yml@main
+    uses: nit-administrative-systems/ado-reusable-terraform-workflow/.github/workflows/terraform-reusable.yml@main
     with:
       iac-path: 'iac/dev'
       run-apply: false
