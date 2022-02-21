@@ -43,7 +43,7 @@ on:
 
 jobs:      
   terraform:
-    uses: nit-administrative-systems/terraform-composite-action/.github/workflows/terraform-reusable.yml@main
+    uses: nit-administrative-systems/ado-terraform-reusable-workflow/.github/workflows/terraform-reusable.yml@main
     with:
       iac-path: 'iac/dev'
       run-apply: false
