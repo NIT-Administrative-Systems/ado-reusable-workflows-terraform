@@ -82,7 +82,7 @@ jobs:
         id: plan
         run: |
           cd ${{ inputs.iac-path }}
-          terraform plan -no-color
+          terraform plan -no-color | sed -ne '/--------------------------------------------/,$ p'
         continue-on-error: true
       - name: Update PR Comment with Plan
         if: steps.cache-comment-id.outputs.cache-hit == 'true' && github.event_name == 'pull_request'
