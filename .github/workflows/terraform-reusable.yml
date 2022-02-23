@@ -82,7 +82,9 @@ jobs:
         id: plan
         run: |
           cd ${{ inputs.iac-path }}
-          echo "::set-output name=tf-plan::$(terraform plan -no-color | sed -ne '/--------------------------------------------/,$ p')"
+          OUTPUT=$(terraform plan -no-color | sed -ne '/--------------------------------------------/,$ p')
+          echo 'Brent'
+          echo $OUTPUT
         continue-on-error: true
       - name: Update PR Comment with Plan
         if: steps.cache-comment-id.outputs.cache-hit == 'true' && github.event_name == 'pull_request'
