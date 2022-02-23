@@ -136,7 +136,7 @@ jobs:
         id: create-pr-comment
         uses: actions/github-script@v5
         env:
-          PLAN: "${{ steps.plan.outputs.stdout }}"
+          PLAN: "${{ steps.plan.outputs.tf-plan }}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           result-encoding: string
