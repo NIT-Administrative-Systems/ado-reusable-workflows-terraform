@@ -84,8 +84,12 @@ jobs:
         run: |
           cd ${{ inputs.iac-path }}
           OUTPUT=$(terraform plan -no-color | sed -ne '/--------------------------------------------/,$ p')
-          echo 'Brent'
-          echo $OUTPUT
+          OUTPUT="${OUTPUT//'%'/'%25'}"
+          OUTPUT="${OUTPUT//$'\n'/'%0A'}"
+          OUTPUT="${OUTPUT//$'\r'/'%0D'}"
+
+          echo "::set-env name=tf-plan::$OUTPUT"
+
         continue-on-error: true
       - name: Update PR Comment with Plan
         if: steps.cache-comment-id.outputs.cache-hit == 'true' && github.event_name == 'pull_request'
