@@ -88,7 +88,7 @@ jobs:
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
 
-          echo "::set-env name=tf-plan::$OUTPUT"
+          echo "::set-output name=tf-plan::$OUTPUT"
 
         continue-on-error: true
       - name: Update PR Comment with Plan
