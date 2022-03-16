@@ -29,6 +29,9 @@ on:
       AWS_SECRET_ACCESS_KEY:
         description: 'AWS Secret Access Key'
         required: true
+      TF_SECRETS:
+        description: 'JSON formatted array of secrets to be injected into terraform'
+        required: false
     outputs:
       terraform-outputs:
         description: "The outputs from terraform apply"
@@ -174,13 +177,24 @@ jobs:
             cd comment-cache
             echo ${{ steps.create-pr-comment.outputs.result }} > comment-id
             ls
-           
+
+      - name: Secrets to ENV
+        if: ${{ inputs.run-apply }}
+        shell: bash
+        run: |
+          for line in $(echo ${{ secrets.TF_SECRETS }} | jq -c '.[]' ); do
+            name=$(echo $line | jq -r .name)
+            value=$(echo $line | jq -r .value)
+            echo "${name}=${value}" >> $GITHUB_ENV
+          done
+
       - name: Terraform Apply
         id: apply
         if: ${{ inputs.run-apply }}
         shell: bash
         run: |
           cd ${{ inputs.iac-path }}
+
           terraform apply -auto-approve
           
           echo "::set-output name=terraform-outputs::$(terraform output -json)"
