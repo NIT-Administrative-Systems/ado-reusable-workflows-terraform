@@ -70,8 +70,8 @@ jobs:
             name=$(echo $line | jq -r .name)
             value=$(echo $line | jq -r .value)
 
-            echo "${name}=${value}" >> $GITHUB_ENV
-            echo "::add-mask::$name"
+            echo "$name=$value" >> $GITHUB_ENV
+            echo "::add-mask::$value"
           done
 
       - name: Terraform Format
