@@ -66,12 +66,7 @@ jobs:
       - name: Secrets to ENV
         shell: bash
         run: |
-          for line in $(echo "${{ secrets.TF_SECRETS }}" | jq -c '.[]' ); do
-            name=$(echo $line | jq -r .name)
-            value=$(echo $line | jq -r .value)
-
-            echo "${name}=${value}" >> $GITHUB_ENV
-          done
+            echo "TF_VAR_oidc_secret=babtest" >> $GITHUB_ENV
 
       - name: Terraform Format
         id: fmt
