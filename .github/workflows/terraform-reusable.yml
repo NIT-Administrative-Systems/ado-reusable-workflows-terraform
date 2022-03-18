@@ -68,6 +68,20 @@ jobs:
           terraform_version: ${{ inputs.terraform-version }}
           terraform_wrapper: false
 
+      - name: Secrets to ENV
+        if: ${{ inputs.run-apply }}
+        shell: bash
+        run: |
+          for line in $(echo "${{ secrets.TF_SECRETS }}" | jq -c '.[]' ); do
+            name=$(echo $line | jq -r .name)
+            value=$(echo $line | jq -r .value)
+            
+            echo "Name = ${name}"
+            echo "Value = ${value}"
+            
+            echo "${name}=${value}" >> $GITHUB_ENV
+          done
+
       - name: Terraform Format
         id: fmt
         run: terraform fmt -check
@@ -177,16 +191,6 @@ jobs:
             cd comment-cache
             echo ${{ steps.create-pr-comment.outputs.result }} > comment-id
             ls
-
-      - name: Secrets to ENV
-        if: ${{ inputs.run-apply }}
-        shell: bash
-        run: |
-          for line in $(echo "${{ secrets.TF_SECRETS }}" | jq -c '.[]' ); do
-            name=$(echo $line | jq -r .name)
-            value=$(echo $line | jq -r .value)
-            echo "${name}=${value}" >> $GITHUB_ENV
-          done
 
       - name: Terraform Apply
         id: apply
