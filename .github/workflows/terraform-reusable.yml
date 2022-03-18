@@ -57,11 +57,6 @@ jobs:
           path: ./comment-cache
           key: pr-${{ github.event.number }}-comment-id${{ inputs.cache-key-suffix }}
 
-      - name: test cache
-        run: |
-            ls
-            pwd
-        
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
         with:
@@ -179,7 +174,7 @@ jobs:
         if: steps.plan.outcome == 'failure'
         run: exit 1
 
-      - name: test cache End
+      - name: Set cache
         run: |
             ls
             pwd
