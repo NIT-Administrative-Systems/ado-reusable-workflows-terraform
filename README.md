@@ -27,7 +27,8 @@ Create a workflow `.yml` file in your repositories `.github/workflows` directory
 ### Secrets
 
 * `AWS_ACCESS_KEY_ID` - (required) AWS Access Key (Stored in Org Secrets), by GitHub design this has to be passed.  
-* `AWS_SECRET_ACCESS_KEY` - (required) AWS Secret Access Key (Stored in Org Secrets.)   
+* `AWS_SECRET_ACCESS_KEY` - (required) AWS Secret Access Key (Stored in Org Secrets.)
+* `TF_SECRETS:` -  (optional) JSON formatted array of secrets (name, value) to be injected into terraform
 
 ### Outputs
 
@@ -51,5 +52,12 @@ jobs:
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.TF_KEY_ADO_NONPROD }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_SECRET_ADO_NONPROD }}
+      TF_SECRETS: >-
+        [
+           { 
+             \"name\" : \"EXAMPLE_NAME\",
+             \"value\" : \"${{ secrets.EXP_SECRET }}\"
+            }
+         ]
       
 ```
