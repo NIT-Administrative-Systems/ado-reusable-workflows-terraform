@@ -66,7 +66,7 @@ jobs:
       - name: Secrets to ENV
         shell: bash
         run: |
-          for line in $(echo "${{ secrets.TF_SECRETS }}" | jq -c '.[]' ); do
+          for line in $(echo ${{ secrets.TF_SECRETS }} | jq -c '.[]' ); do
             name=$(echo $line | jq -r .name)
             value=$(echo $line | jq -r .value)
 
