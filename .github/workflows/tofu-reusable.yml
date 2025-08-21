@@ -1,0 +1,206 @@
+name: OpenTofu Checks
+
+on:
+  workflow_call:
+    inputs:
+      run-apply:
+        description: 'Whether or not to run tofu apply'
+        required: false
+        default: false
+        type: boolean
+      tofu-version:
+        description: 'Version of OpenTofu to use'
+        required: true
+        type: string
+      iac-path:
+        description: 'relative path to your IAC folder'
+        required: false
+        default: 'iac/develop'
+        type: string
+      cache-key-suffix:
+        description: 'This workflow uses the actions/cache action to store the comment id so it can be updated on subsequent runs'
+        required: false
+        default: ''
+        type: string
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        description: 'AWS Access Key ID'
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        description: 'AWS Secret Access Key'
+        required: true
+      TF_LOCAL_STATE_ENCRYPTION_KEY:
+        description: 'Local state encryption key'
+        required: false
+      TF_SHARED_RESOURCES_STATE_ENCRYPTION_KEY:
+        description: 'Shared resources state encryption key'
+        required: false
+      TF_SECRETS:
+        description: 'JSON formatted array of secrets to be injected into OpenTofu'
+        required: false
+    outputs:
+      tofu-outputs:
+        description: "The outputs from tofu apply"
+        value: ${{ jobs.opentofu.outputs.tofu-outputs }}
+jobs:
+  opentofu:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_VAR_local_state_passphrase: ${{ secrets.TF_LOCAL_STATE_ENCRYPTION_KEY }}
+      TF_VAR_shared_state_passphrase: ${{ secrets.TF_SHARED_RESOURCES_STATE_ENCRYPTION_KEY }}
+    outputs:
+      tofu-outputs: ${{ steps.plan.tofu-outputs }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Cache Comment Id
+        if: github.event_name == 'pull_request'
+        id: cache-comment-id
+        uses: actions/cache@v4.2.3
+        with:
+          path: ./comment-cache
+          key: pr-${{ github.event.number }}-comment-id${{ inputs.cache-key-suffix }}
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: ${{ inputs.tofu-version }}
+          tofu_wrapper: false
+
+      - name: Secrets to ENV
+        shell: bash
+        run: |
+          for line in $(echo "${{ secrets.TF_SECRETS }}" | jq -c '.[]' ); do
+            name=$(echo $line | jq -r .name)
+            value=$(echo $line | jq -r .value)
+
+            echo "$name=$value" >> $GITHUB_ENV
+            echo "::add-mask::$value"
+          done
+
+      - name: Tofu Format
+        working-directory: ${{ inputs.iac-path }}
+        id: fmt
+        run: tofu fmt -check
+
+      - name: Tofu Init
+        id: init
+        working-directory: ${{ inputs.iac-path }}
+        run: tofu init
+
+      - name: Tofu Validate
+        id: validate
+        working-directory: ${{ inputs.iac-path }}
+        run: tofu validate -no-color
+
+      - name: Tofu Plan
+        id: plan
+        working-directory: ${{ inputs.iac-path }}
+        run: |
+          OUTPUT=$(tofu plan -no-color | sed -ne '/--------------------------------------------/,$ p')
+          OUTPUT="${OUTPUT//'%'/'%25'}"
+          OUTPUT="${OUTPUT//$'\n'/'%0A'}"
+          OUTPUT="${OUTPUT//$'\r'/'%0D'}"
+
+          echo "tf-plan=$OUTPUT" >> $GITHUB_OUTPUT
+
+        continue-on-error: true
+
+      - name: Update PR Comment with Plan
+        if: steps.cache-comment-id.outputs.cache-hit == 'true' && github.event_name == 'pull_request'
+        id: update-pr-comment
+        uses: actions/github-script@v7
+        env:
+          PLAN: "${{ steps.plan.outputs.tf-plan }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          result-encoding: string
+          script: |
+            console.log("Context: ")
+            console.log(context)
+            const fs = require('fs')
+            let commentId = 0
+            try {
+              commentId = await fs.readFileSync('./comment-cache/comment-id', 'utf8')
+            } catch (err) {
+              console.log("err = " + err)
+              return 
+            }
+            console.log("Comment Id: " + commentId)
+
+            const output = `#### Tofu Checks for IAC Environment \`${{ inputs.iac-path }}\`
+            #### Tofu Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Tofu Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Tofu Validation 🤖\`${{ steps.validate.outcome }}\`
+            #### Tofu Plan 📖\`${{ steps.plan.outcome }}\`
+            <details>
+            <summary>Show Plan</summary>
+            \`\`\`\
+            ${process.env.PLAN}
+            \`\`\`
+            </details>
+            *Auth: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+            github.rest.issues.updateComment({
+               comment_id: commentId,
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               body: output
+            })
+
+      - name: Create PR Comment with Plan
+        if: steps.cache-comment-id.outputs.cache-hit != 'true' && github.event_name == 'pull_request'
+        id: create-pr-comment
+        uses: actions/github-script@v7
+        env:
+          PLAN: "${{ steps.plan.outputs.tf-plan }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          result-encoding: string
+          script: |
+            const output = `#### Tofu Checks for IAC Environment \`${{ inputs.iac-path }}\`
+            #### Tofu Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Tofu Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Tofu Validation 🤖\`${{ steps.validate.outcome }}\`
+            #### Tofu Plan 📖\`${{ steps.plan.outcome }}\`
+            <details>
+            <summary>Show Plan</summary>
+            \`\`\`\
+            ${process.env.PLAN}
+            \`\`\`
+            </details>
+            *Auth: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+             
+            const result = await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+            console.log('Create comment Comment Id: ' + result.data.id)
+            return result.data.id
+
+      - name: Tofu Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Set cache
+        run: |
+            ls
+            pwd
+            mkdir -p comment-cache
+            cd comment-cache
+            echo "${{ steps.create-pr-comment.outputs.result }}" > comment-id
+            ls
+
+      - name: Tofu Apply
+        id: apply
+        if: ${{ inputs.run-apply }}
+        working-directory: ${{ inputs.iac-path }}
+        run: |
+          tofu apply -auto-approve
+          
+          echo "tofu-outputs=$(tofu output -json)" >> $GITHUB_OUTPUT
