@@ -100,13 +100,25 @@ jobs:
       - name: Tofu Plan
         id: plan
         working-directory: ${{ inputs.iac-path }}
+        # Captures the plan output
+        # Reads the output and prepares it for GitHub Actions
+        # Truncate based on GitHub Actions output size (65000)
+        # Escape special characters for GitHub Actions
         run: |
-          OUTPUT=$(tofu plan -no-color | sed -ne '/--------------------------------------------/,$ p')
+          tofu plan -no-color -out=tfplan 2>&1 | tee plan_output.txt
+          OUTPUT=$(cat plan_output.txt)
+
+          if [ ${#OUTPUT} -gt 65000 ]; then
+            OUTPUT="${OUTPUT:0:65000}... (truncated)"
+          fi
+
           OUTPUT="${OUTPUT//'%'/'%25'}"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
 
-          echo "tf-plan=$OUTPUT" >> $GITHUB_OUTPUT
+          echo "tf-plan<<EOF" >> $GITHUB_OUTPUT
+          echo "$OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
         continue-on-error: true
 
