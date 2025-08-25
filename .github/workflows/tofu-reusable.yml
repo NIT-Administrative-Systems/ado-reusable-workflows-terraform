@@ -120,13 +120,6 @@ jobs:
           } >> $GITHUB_OUTPUT
         continue-on-error: true
 
-      - name: Debug Plan Output
-        if: always()
-        run: |
-          echo "Plan output length: $(wc -c < ${{ inputs.iac-path }}/plan_output.txt)"
-          echo "First 500 chars:"
-          head -c 500 ${{ inputs.iac-path }}/plan_output.txt
-
       - name: Update PR Comment with Plan
         if: steps.cache-comment-id.outputs.cache-hit == 'true' && github.event_name == 'pull_request'
         id: update-pr-comment
@@ -161,7 +154,7 @@ jobs:
             #### Tofu Plan 📖\`${{ steps.plan.outcome }}\`
             <details>
             <summary>Show Plan</summary>
-            \`\`\
+            \`\`\`
             ${planOutput}
             \`\`\`
             </details>
@@ -191,7 +184,7 @@ jobs:
               console.log("Could not read plan output: " + err);
               planOutput = 'Plan output not available';
             }
-              
+
             const output = `#### Tofu Checks for IAC Environment \`${{ inputs.iac-path }}\`
             #### Tofu Format and Style 🖌\`${{ steps.fmt.outcome }}\`
             #### Tofu Initialization ⚙️\`${{ steps.init.outcome }}\`
