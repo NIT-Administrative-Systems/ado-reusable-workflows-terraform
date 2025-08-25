@@ -47,18 +47,18 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Cache Comment Id
         if: github.event_name == 'pull_request'
         id: cache-comment-id
-        uses: actions/cache@v4.2.3
+        uses: actions/cache@v4.2.4
         with:
           path: ./comment-cache
           key: pr-${{ github.event.number }}-comment-id${{ inputs.cache-key-suffix }}
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v1
+        uses: hashicorp/setup-terraform@v3.1.2
         with:
           terraform_version: ${{ inputs.terraform-version }}
           terraform_wrapper: false
@@ -75,43 +75,49 @@ jobs:
           done
 
       - name: Terraform Format
+        working-directory: ${{ inputs.iac-path }}
         id: fmt
         run: terraform fmt -check
 
       - name: Terraform Init
         id: init
-        run: |
-          cd ${{ inputs.iac-path }}
-          terraform init
+        working-directory: ${{ inputs.iac-path }}
+        run: terraform init
       - name: Terraform Validate
         id: validate
-        run: |
-          cd ${{ inputs.iac-path }}
-          terraform validate -no-color
+        working-directory: ${{ inputs.iac-path }}
+        run: terraform validate -no-color
       - name: Terraform Plan
         id: plan
+        working-directory: ${{ inputs.iac-path }}
+        # Captures the plan output
+        # Reads the output and prepares it for GitHub Actions
+        # Truncate based on GitHub Actions output size (65000)
+        # Escape special characters for GitHub Actions
         run: |
-          cd ${{ inputs.iac-path }}
-          OUTPUT=$(terraform plan -no-color | sed -ne '/--------------------------------------------/,$ p')
-          OUTPUT="${OUTPUT//'%'/'%25'}"
-          OUTPUT="${OUTPUT//$'\n'/'%0A'}"
-          OUTPUT="${OUTPUT//$'\r'/'%0D'}"
-
-          echo "::set-output name=tf-plan::$OUTPUT"
+          terraform plan -no-color -out=tfplan 2>&1 | tee plan_output.txt
+          OUTPUT=$(cat plan_output.txt)
+          
+          if [ ${#OUTPUT} -gt 65000 ]; then
+            OUTPUT="${OUTPUT:0:65000}... (truncated)"
+          fi
+          
+          # Use heredoc without escaping
+          {
+            echo "tf-plan<<EOF"
+            echo "$OUTPUT"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
         continue-on-error: true
       - name: Update PR Comment with Plan
         if: steps.cache-comment-id.outputs.cache-hit == 'true' && github.event_name == 'pull_request'
         id: update-pr-comment
-        uses: actions/github-script@v5
-        env:
-          PLAN: "${{ steps.plan.outputs.tf-plan }}"
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           result-encoding: string
           script: |
-            console.log("Context: ")
-            console.log(context)
             const fs = require('fs')
             let commentId = 0
             try {
@@ -122,6 +128,15 @@ jobs:
             }
             console.log("Comment Id: " + commentId)
 
+            // Read the plan output directly from file
+            let planOutput = '';
+            try {
+              planOutput = fs.readFileSync('${{ inputs.iac-path }}/plan_output.txt', 'utf8');
+            } catch (err) {
+              console.log("Could not read plan output: " + err);
+              planOutput = 'Plan output not available';
+            }
+
             const output = `#### Terraform Checks for IAC Environment \`${{ inputs.iac-path }}\`
             #### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
@@ -129,8 +144,8 @@ jobs:
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
             <details>
             <summary>Show Plan</summary>
-            \`\`\`\
-            ${process.env.PLAN}
+            \`\`\`
+            ${planOutput}
             \`\`\`
             </details>
             *Auth: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
@@ -143,13 +158,22 @@ jobs:
       - name: Create PR Comment with Plan
         if: steps.cache-comment-id.outputs.cache-hit != 'true' && github.event_name == 'pull_request'
         id: create-pr-comment
-        uses: actions/github-script@v5
-        env:
-          PLAN: "${{ steps.plan.outputs.tf-plan }}"
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           result-encoding: string
           script: |
+            const fs = require('fs')
+      
+            // Read the plan output directly from file
+            let planOutput = '';
+            try {
+              planOutput = fs.readFileSync('${{ inputs.iac-path }}/plan_output.txt', 'utf8');
+            } catch (err) {
+              console.log("Could not read plan output: " + err);
+              planOutput = 'Plan output not available';
+            }
+
             const output = `#### Terraform Checks for IAC Environment \`${{ inputs.iac-path }}\`
             #### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
@@ -157,8 +181,8 @@ jobs:
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
             <details>
             <summary>Show Plan</summary>
-            \`\`\`\
-            ${process.env.PLAN}
+            \`\`\`
+            ${planOutput}
             \`\`\`
             </details>
             *Auth: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
@@ -181,16 +205,15 @@ jobs:
             pwd
             mkdir -p comment-cache
             cd comment-cache
-            echo ${{ steps.create-pr-comment.outputs.result }} > comment-id
+            echo "${{ steps.create-pr-comment.outputs.result }}" > comment-id
             ls
 
       - name: Terraform Apply
         id: apply
+        working-directory: ${{ inputs.iac-path }}
         if: ${{ inputs.run-apply }}
         shell: bash
         run: |
-          cd ${{ inputs.iac-path }}
-
           terraform apply -auto-approve
-          
-          echo "::set-output name=terraform-outputs::$(terraform output -json)"
+        
+          echo "terraform-outputs=$(terraform output -json)" >> $GITHUB_OUTPUT
