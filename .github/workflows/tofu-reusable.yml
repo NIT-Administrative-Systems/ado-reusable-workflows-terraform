@@ -131,8 +131,6 @@ jobs:
         if: steps.cache-comment-id.outputs.cache-hit == 'true' && github.event_name == 'pull_request'
         id: update-pr-comment
         uses: actions/github-script@v7
-        env:
-          PLAN: "${{ steps.plan.outputs.tf-plan }}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           result-encoding: string
@@ -149,6 +147,9 @@ jobs:
             }
             console.log("Comment Id: " + commentId)
 
+            // Get the plan output directly from the step output
+            const planOutput = `${{ steps.plan.outputs.tf-plan }}`;
+
             const output = `#### Tofu Checks for IAC Environment \`${{ inputs.iac-path }}\`
             #### Tofu Format and Style 🖌\`${{ steps.fmt.outcome }}\`
             #### Tofu Initialization ⚙️\`${{ steps.init.outcome }}\`
@@ -156,8 +157,8 @@ jobs:
             #### Tofu Plan 📖\`${{ steps.plan.outcome }}\`
             <details>
             <summary>Show Plan</summary>
-            \`\`\`\
-            ${process.env.PLAN}
+            `\`\`\
+            ${planOutput}
             \`\`\`
             </details>
             *Auth: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
@@ -172,12 +173,12 @@ jobs:
         if: steps.cache-comment-id.outputs.cache-hit != 'true' && github.event_name == 'pull_request'
         id: create-pr-comment
         uses: actions/github-script@v7
-        env:
-          PLAN: "${{ steps.plan.outputs.tf-plan }}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           result-encoding: string
           script: |
+            // Get the plan output directly from the step output
+            const planOutput = `${{ steps.plan.outputs.tf-plan }}`;
             const output = `#### Tofu Checks for IAC Environment \`${{ inputs.iac-path }}\`
             #### Tofu Format and Style 🖌\`${{ steps.fmt.outcome }}\`
             #### Tofu Initialization ⚙️\`${{ steps.init.outcome }}\`
@@ -185,8 +186,8 @@ jobs:
             #### Tofu Plan 📖\`${{ steps.plan.outcome }}\`
             <details>
             <summary>Show Plan</summary>
-            \`\`\`\
-            ${process.env.PLAN}
+            \`\`\
+            ${planOutput}
             \`\`\`
             </details>
             *Auth: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
