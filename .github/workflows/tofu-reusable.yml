@@ -135,8 +135,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           result-encoding: string
           script: |
-            console.log("Context: ")
-            console.log(context)
             const fs = require('fs')
             let commentId = 0
             try {
@@ -147,8 +145,14 @@ jobs:
             }
             console.log("Comment Id: " + commentId)
 
-            // Get the plan output directly from the step output
-            const planOutput = `${{ steps.plan.outputs.tf-plan }}`;
+            // Read the plan output directly from file
+            let planOutput = '';
+            try {
+              planOutput = fs.readFileSync('${{ inputs.iac-path }}/plan_output.txt', 'utf8');
+            } catch (err) {
+              console.log("Could not read plan output: " + err);
+              planOutput = 'Plan output not available';
+            }
 
             const output = `#### Tofu Checks for IAC Environment \`${{ inputs.iac-path }}\`
             #### Tofu Format and Style 🖌\`${{ steps.fmt.outcome }}\`
@@ -157,7 +161,7 @@ jobs:
             #### Tofu Plan 📖\`${{ steps.plan.outcome }}\`
             <details>
             <summary>Show Plan</summary>
-            `\`\`\
+            \`\`\
             ${planOutput}
             \`\`\`
             </details>
@@ -177,8 +181,17 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           result-encoding: string
           script: |
-            // Get the plan output directly from the step output
-            const planOutput = `${{ steps.plan.outputs.tf-plan }}`;
+            const fs = require('fs')
+      
+            // Read the plan output directly from file
+            let planOutput = '';
+            try {
+              planOutput = fs.readFileSync('${{ inputs.iac-path }}/plan_output.txt', 'utf8');
+            } catch (err) {
+              console.log("Could not read plan output: " + err);
+              planOutput = 'Plan output not available';
+            }
+              
             const output = `#### Tofu Checks for IAC Environment \`${{ inputs.iac-path }}\`
             #### Tofu Format and Style 🖌\`${{ steps.fmt.outcome }}\`
             #### Tofu Initialization ⚙️\`${{ steps.init.outcome }}\`
@@ -186,7 +199,7 @@ jobs:
             #### Tofu Plan 📖\`${{ steps.plan.outcome }}\`
             <details>
             <summary>Show Plan</summary>
-            \`\`\
+            \`\`\`
             ${planOutput}
             \`\`\`
             </details>
