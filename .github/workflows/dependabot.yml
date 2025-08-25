@@ -1,0 +1,29 @@
+# Please see the documentation for all configuration options:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+# and https://docs.github.com/en/enterprise-server@3.6/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file#maven
+
+version: 2
+updates:
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+      day: monday
+      time: "09:00"
+      timezone: "America/Chicago"
+    # Allow up to 10 open pull requests for dependencies
+    open-pull-requests-limit: 10
+    assignees: ["NegaAshley"]
+    reviewers:
+      - "NIT-Administrative-Systems/eacd-csi-leads"
+      - "NIT-Administrative-Systems/eacd-architects"
+    labels: ["dependabot", "deps", "github-actions"]
+    commit-message:
+      # Prefix all commit messages with "github-actions: " plus its scope, that is, a list of updated dependencies
+      prefix: "github-actions"
+      include: "scope"
+    groups:
+      non-major-github-actions-updates:
+        patterns: [ "*" ]
+        update-types: [ "minor", "patch" ]
