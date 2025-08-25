@@ -107,20 +107,25 @@ jobs:
         run: |
           tofu plan -no-color -out=tfplan 2>&1 | tee plan_output.txt
           OUTPUT=$(cat plan_output.txt)
-
+          
           if [ ${#OUTPUT} -gt 65000 ]; then
             OUTPUT="${OUTPUT:0:65000}... (truncated)"
           fi
-
-          OUTPUT="${OUTPUT//'%'/'%25'}"
-          OUTPUT="${OUTPUT//$'\n'/'%0A'}"
-          OUTPUT="${OUTPUT//$'\r'/'%0D'}"
-
-          echo "tf-plan<<EOF" >> $GITHUB_OUTPUT
-          echo "$OUTPUT" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
+          
+          # Use heredoc without escaping
+          {
+            echo "tf-plan<<EOF"
+            echo "$OUTPUT"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
         continue-on-error: true
+
+      - name: Debug Plan Output
+        if: always()
+        run: |
+          echo "Plan output length: $(wc -c < ${{ inputs.iac-path }}/plan_output.txt)"
+          echo "First 500 chars:"
+          head -c 500 ${{ inputs.iac-path }}/plan_output.txt
 
       - name: Update PR Comment with Plan
         if: steps.cache-comment-id.outputs.cache-hit == 'true' && github.event_name == 'pull_request'
