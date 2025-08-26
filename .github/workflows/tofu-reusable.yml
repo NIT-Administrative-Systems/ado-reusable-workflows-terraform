@@ -1,15 +1,15 @@
-name: Terraform Checks
+name: OpenTofu Checks
 
 on:
   workflow_call:
     inputs:
       run-apply:
-        description: 'Whether or not to run terraform apply'
+        description: 'Whether or not to run tofu apply'
         required: false
         default: false
         type: boolean
-      terraform-version:
-        description: 'Version of terraform to use'
+      tofu-version:
+        description: 'Version of OpenTofu to use'
         required: true
         type: string
       iac-path:
@@ -29,21 +29,29 @@ on:
       AWS_SECRET_ACCESS_KEY:
         description: 'AWS Secret Access Key'
         required: true
+      TF_LOCAL_STATE_ENCRYPTION_KEY:
+        description: 'Local state encryption key'
+        required: false
+      TF_SHARED_RESOURCES_STATE_ENCRYPTION_KEY:
+        description: 'Shared resources state encryption key'
+        required: false
       TF_SECRETS:
-        description: 'JSON formatted array of secrets to be injected into terraform'
+        description: 'JSON formatted array of secrets to be injected into OpenTofu'
         required: false
     outputs:
-      terraform-outputs:
-        description: "The outputs from terraform apply"
-        value: ${{ jobs.terraform.outputs.terraform-outputs }}
+      tofu-outputs:
+        description: "The outputs from tofu apply"
+        value: ${{ jobs.opentofu.outputs.tofu-outputs }}
 jobs:
-  terraform:
+  opentofu:
     runs-on: ubuntu-latest
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_VAR_local_state_passphrase: ${{ secrets.TF_LOCAL_STATE_ENCRYPTION_KEY }}
+      TF_VAR_shared_state_passphrase: ${{ secrets.TF_SHARED_RESOURCES_STATE_ENCRYPTION_KEY }}
     outputs:
-      terraform-outputs: ${{ steps.plan.terraform-outputs }}
+      tofu-outputs: ${{ steps.plan.tofu-outputs }}
 
     steps:
       - name: Checkout Code
@@ -57,11 +65,11 @@ jobs:
           path: ./comment-cache
           key: pr-${{ github.event.number }}-comment-id${{ inputs.cache-key-suffix }}
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3.1.2
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
         with:
-          terraform_version: ${{ inputs.terraform-version }}
-          terraform_wrapper: false
+          tofu_version: ${{ inputs.tofu-version }}
+          tofu_wrapper: false
 
       - name: Secrets to ENV
         shell: bash
@@ -74,35 +82,38 @@ jobs:
             echo "::add-mask::$value"
           done
 
-      - name: Terraform Format
+      - name: Tofu Format
         working-directory: ${{ inputs.iac-path }}
         id: fmt
-        run: terraform fmt -check
+        run: tofu fmt -check
 
-      - name: Terraform Init
+      - name: Tofu Init
         id: init
         working-directory: ${{ inputs.iac-path }}
-        run: terraform init
-      - name: Terraform Validate
+        run: tofu init
+
+      - name: Tofu Validate
         id: validate
         working-directory: ${{ inputs.iac-path }}
-        run: terraform validate -no-color
-      - name: Terraform Plan
+        run: tofu validate -no-color
+
+      - name: Tofu Plan
         id: plan
         working-directory: ${{ inputs.iac-path }}
         # Captures the plan output
         # Reads the output and prepares it for GitHub Actions
         # Truncate based on GitHub Actions output size (65000)
         run: |
-          terraform plan -no-color -out=tfplan 2>&1 | tee plan_output.txt
+          tofu plan -no-color -out=tfplan 2>&1 | tee plan_output.txt
           OUTPUT=$(cat plan_output.txt)
           
           if [ ${#OUTPUT} -gt 65000 ]; then
             OUTPUT="${OUTPUT:0:65000}... (truncated)"
             echo "$OUTPUT" > plan_output.txt
           fi
-
+          
         continue-on-error: true
+
       - name: Update PR Comment with Plan
         if: steps.cache-comment-id.outputs.cache-hit == 'true' && github.event_name == 'pull_request'
         id: update-pr-comment
@@ -130,11 +141,11 @@ jobs:
               planOutput = 'Plan output not available';
             }
 
-            const output = `#### Terraform Checks for IAC Environment \`${{ inputs.iac-path }}\`
-            #### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+            const output = `#### Tofu Checks for IAC Environment \`${{ inputs.iac-path }}\`
+            #### Tofu Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Tofu Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Tofu Validation 🤖\`${{ steps.validate.outcome }}\`
+            #### Tofu Plan 📖\`${{ steps.plan.outcome }}\`
             <details>
             <summary>Show Plan</summary>
             \`\`\`
@@ -148,6 +159,7 @@ jobs:
                repo: context.repo.repo,
                body: output
             })
+
       - name: Create PR Comment with Plan
         if: steps.cache-comment-id.outputs.cache-hit != 'true' && github.event_name == 'pull_request'
         id: create-pr-comment
@@ -167,11 +179,11 @@ jobs:
               planOutput = 'Plan output not available';
             }
 
-            const output = `#### Terraform Checks for IAC Environment \`${{ inputs.iac-path }}\`
-            #### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+            const output = `#### Tofu Checks for IAC Environment \`${{ inputs.iac-path }}\`
+            #### Tofu Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Tofu Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Tofu Validation 🤖\`${{ steps.validate.outcome }}\`
+            #### Tofu Plan 📖\`${{ steps.plan.outcome }}\`
             <details>
             <summary>Show Plan</summary>
             \`\`\`
@@ -188,7 +200,8 @@ jobs:
             })
             console.log('Create comment Comment Id: ' + result.data.id)
             return result.data.id
-      - name: Terraform Status
+
+      - name: Tofu Status
         if: steps.plan.outcome == 'failure'
         run: exit 1
 
@@ -201,12 +214,11 @@ jobs:
             echo "${{ steps.create-pr-comment.outputs.result }}" > comment-id
             ls
 
-      - name: Terraform Apply
+      - name: Tofu Apply
         id: apply
-        working-directory: ${{ inputs.iac-path }}
         if: ${{ inputs.run-apply }}
-        shell: bash
+        working-directory: ${{ inputs.iac-path }}
         run: |
-          terraform apply -auto-approve
-        
-          echo "terraform-outputs=$(terraform output -json)" >> $GITHUB_OUTPUT
+          tofu apply -auto-approve
+          
+          echo "tofu-outputs=$(tofu output -json)" >> $GITHUB_OUTPUT
