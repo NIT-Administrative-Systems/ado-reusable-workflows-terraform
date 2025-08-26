@@ -101,13 +101,6 @@ jobs:
             OUTPUT="${OUTPUT:0:65000}... (truncated)"
             echo "$OUTPUT" > plan_output.txt
           fi
-          
-          # Use heredoc without escaping
-          {
-            echo "tf-plan<<EOF"
-            echo "$OUTPUT"
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
 
         continue-on-error: true
       - name: Update PR Comment with Plan
