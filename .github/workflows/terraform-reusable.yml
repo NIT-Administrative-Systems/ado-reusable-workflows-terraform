@@ -93,13 +93,13 @@ jobs:
         # Captures the plan output
         # Reads the output and prepares it for GitHub Actions
         # Truncate based on GitHub Actions output size (65000)
-        # Escape special characters for GitHub Actions
         run: |
           terraform plan -no-color -out=tfplan 2>&1 | tee plan_output.txt
           OUTPUT=$(cat plan_output.txt)
           
           if [ ${#OUTPUT} -gt 65000 ]; then
             OUTPUT="${OUTPUT:0:65000}... (truncated)"
+            echo "$OUTPUT" > plan_output.txt
           fi
           
           # Use heredoc without escaping
