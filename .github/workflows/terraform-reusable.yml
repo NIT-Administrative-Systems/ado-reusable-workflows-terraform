@@ -209,4 +209,6 @@ jobs:
         run: |
           terraform apply -auto-approve
         
-          echo "terraform-outputs=$(terraform output -json)" >> $GITHUB_OUTPUT
+          echo "terraform-outputs<<EOF" >> $GITHUB_OUTPUT
+          terraform output -json 2>/dev/null || echo "{}"
+          echo "EOF" >> $GITHUB_OUTPUT
