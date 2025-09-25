@@ -221,6 +221,8 @@ jobs:
         run: |
           tofu apply -auto-approve
           
-          echo "tofu-outputs<<EOF" >> $GITHUB_OUTPUT
+          {
+          echo "tofu-outputs<<EOF"
           tofu output -json 2>/dev/null || echo "{}"
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "EOF"
+          } >> $GITHUB_OUTPUT

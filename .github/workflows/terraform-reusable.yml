@@ -209,6 +209,8 @@ jobs:
         run: |
           terraform apply -auto-approve
         
-          echo "terraform-outputs<<EOF" >> $GITHUB_OUTPUT
+          {
+          echo "terraform-outputs<<EOF"
           terraform output -json 2>/dev/null || echo "{}"
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "EOF"
+          } >> $GITHUB_OUTPUT
