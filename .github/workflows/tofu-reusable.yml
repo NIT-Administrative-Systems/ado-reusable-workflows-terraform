@@ -222,3 +222,5 @@ jobs:
           tofu apply -auto-approve
           
           echo "::set-output name=tofu-outputs::$(tofu output -json)"
+
+#test
