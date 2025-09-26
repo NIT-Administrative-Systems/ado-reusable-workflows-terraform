@@ -221,4 +221,4 @@ jobs:
         run: |
           tofu apply -auto-approve
           
-          echo "tofu-outputs=$(tofu output -json)" >> $GITHUB_OUTPUT
+          echo "::set-output name=terraform-outputs::$(terraform output -json)"

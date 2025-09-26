@@ -209,4 +209,4 @@ jobs:
         run: |
           terraform apply -auto-approve
         
-          echo "terraform-outputs=$(terraform output -json)" >> $GITHUB_OUTPUT
+          echo "::set-output name=terraform-outputs::$(terraform output -json)"
