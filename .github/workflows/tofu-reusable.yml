@@ -220,9 +220,37 @@ jobs:
         working-directory: ${{ inputs.iac-path }}
         run: |
           tofu apply -auto-approve
+
+          echo "=== DEBUG: Attempting to capture outputs ==="
+          RAW_OUTPUT=$(tofu output -json 2>&1) || echo "Command failed with exit code: $?"
+          
+          echo "=== DEBUG: Raw output length: ${#RAW_OUTPUT} ==="
+          echo "=== DEBUG: First 500 chars of raw output ==="
+          echo "${RAW_OUTPUT:0:500}"
+
+          if echo "$RAW_OUTPUT" | grep -q '\*\*\*'; then
+            echo "=== DEBUG: Output contains masked values (***) ==="
+          else
+            echo "=== DEBUG: No masked values detected ==="
+          fi
           
           {
           echo "tofu-outputs<<EOF"
           tofu output -json 2>/dev/null || echo "{}"
           echo "EOF"
           } >> $GITHUB_OUTPUT
+
+          echo "=== DEBUG: Content written to GITHUB_OUTPUT ==="
+
+      - name: Verify Output Capture
+        if: ${{ inputs.run-apply }}
+        run: |
+          echo "=== VERIFY: Checking what was captured ==="
+          echo "Output value length: ${#OUTPUT}"
+          if [ -z "$OUTPUT" ]; then
+            echo "WARNING: Output is empty!"
+          else
+            echo "Output appears to be captured"
+          fi
+        env:
+          OUTPUT: ${{ steps.apply.outputs.tofu-outputs }}
