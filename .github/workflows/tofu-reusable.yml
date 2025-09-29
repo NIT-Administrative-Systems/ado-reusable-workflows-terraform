@@ -238,7 +238,12 @@ jobs:
           FIXED_OUTPUT=$(echo "$RAW_OUTPUT" | \
             sed 's/tolist([^)]*)/[]/g' | \
             sed 's/toset([^)]*)/[]/g' | \
-            sed 's/tomap([^)]*)/{}/g')
+            sed 's/tomap([^)]*)/{}/g' | \
+            sed 's/: \*\*\*$/: []/g' | \
+            sed 's/: \*\*\*,/: [],/g' | \
+            sed 's/\*\*\*$/}/g' | \
+            sed 's/\*\*\*,$/},/g' | \
+            sed 's/^\*\*\*$/{/g')
           
           if echo "$FIXED_OUTPUT" | jq . >/dev/null 2>&1; then
             echo "=== DEBUG: JSON is now valid after fixing ==="
