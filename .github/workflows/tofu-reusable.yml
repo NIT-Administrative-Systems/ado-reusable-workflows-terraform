@@ -234,11 +234,27 @@ jobs:
             echo "=== DEBUG: No masked values detected ==="
           fi
           
-          {
-          echo "tofu-outputs<<EOF"
-          tofu output -json 2>/dev/null || echo "{}"
-          echo "EOF"
-          } >> $GITHUB_OUTPUT
+          echo "=== DEBUG: Attempting to fix malformed JSON patterns ==="
+          FIXED_OUTPUT=$(echo "$RAW_OUTPUT" | \
+            sed 's/tolist([^)]*)/[]/g' | \
+            sed 's/toset([^)]*)/[]/g' | \
+            sed 's/tomap([^)]*)/{}/g')
+          
+          if echo "$FIXED_OUTPUT" | jq . >/dev/null 2>&1; then
+            echo "=== DEBUG: JSON is now valid after fixing ==="
+            {
+              echo "tofu-outputs<<EOF"
+              echo "$FIXED_OUTPUT"
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
+          else
+            echo "=== DEBUG: JSON still invalid, using fallback ==="
+            {
+              echo "tofu-outputs<<EOF"
+              tofu output -json 2>/dev/null || echo "{}"
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
+          fi
 
           echo "=== DEBUG: Content written to GITHUB_OUTPUT ==="
 
@@ -251,6 +267,7 @@ jobs:
             echo "WARNING: Output is empty!"
           else
             echo "Output appears to be captured"
+            echo "First 200 chars: ${OUTPUT:0:200}"
           fi
         env:
           OUTPUT: ${{ steps.apply.outputs.tofu-outputs }}
