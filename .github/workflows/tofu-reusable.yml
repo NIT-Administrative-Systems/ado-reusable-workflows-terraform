@@ -51,7 +51,7 @@ jobs:
       TF_VAR_local_state_passphrase: ${{ secrets.TF_LOCAL_STATE_ENCRYPTION_KEY }}
       TF_VAR_shared_state_passphrase: ${{ secrets.TF_SHARED_RESOURCES_STATE_ENCRYPTION_KEY }}
     outputs:
-      tofu-outputs: ${{ steps.apply.tofu-outputs }}
+      tofu-outputs: ${{ steps.apply.outputs.tofu-outputs }}
 
     steps:
       - name: Checkout Code
