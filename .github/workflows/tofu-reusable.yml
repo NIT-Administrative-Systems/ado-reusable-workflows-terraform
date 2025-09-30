@@ -74,18 +74,12 @@ jobs:
       - name: Secrets to ENV
         shell: bash
         run: |
-          if [ -n "${{ secrets.TF_SECRETS }}" ]; then
-            for line in $(echo "${{ secrets.TF_SECRETS }}" | jq -c '.[]' ); do
-              name=$(echo $line | jq -r .name)
-              value=$(echo $line | jq -r .value)
-              
-              # Only set the variable if it has a value
-              if [ -n "$value" ]; then
-                echo "$name=$value" >> $GITHUB_ENV
-                echo "::add-mask::$value"
-              fi
-            done
-          fi
+          for line in $(echo "${{ secrets.TF_SECRETS }}" | jq -c '.[]' ); do
+            name=$(echo $line | jq -r .name)
+            value=$(echo $line | jq -r .value)
+            echo "$name=$value" >> $GITHUB_ENV
+            echo "::add-mask::$value"
+          done
 
       - name: Tofu Format
         working-directory: ${{ inputs.iac-path }}
@@ -95,7 +89,7 @@ jobs:
       - name: Tofu Init
         id: init
         working-directory: ${{ inputs.iac-path }}
-        run: tofu init -no-color
+        run: tofu init
 
       - name: Tofu Validate
         id: validate
@@ -224,48 +218,13 @@ jobs:
         if: ${{ inputs.run-apply }}
         working-directory: ${{ inputs.iac-path }}
         run: |
+          tofu apply -auto-approve
 
-          echo "=== DEBUG: Attempting to capture outputs ==="
-          RAW_OUTPUT=$(tofu output -json 2>&1) || echo "Command failed with exit code: $?"
-          
-          echo "=== DEBUG: Raw output length: ${#RAW_OUTPUT} ==="
-          echo "=== DEBUG: First 500 chars of raw output ==="
-          echo "${RAW_OUTPUT:0:500}"
-
-          if echo "$RAW_OUTPUT" | grep -q '\*\*\*'; then
-            echo "=== DEBUG: Output contains masked values (***) ==="
-          else
-            echo "=== DEBUG: No masked values detected ==="
-          fi
-          
-          echo "=== DEBUG: Attempting to fix malformed JSON patterns ==="
-          FIXED_OUTPUT=$(echo "$RAW_OUTPUT" | \
-            sed 's/tolist([^)]*)/[]/g' | \
-            sed 's/toset([^)]*)/[]/g' | \
-            sed 's/tomap([^)]*)/{}/g' | \
-            sed 's/: \*\*\*$/: []/g' | \
-            sed 's/: \*\*\*,/: [],/g' | \
-            sed 's/\*\*\*$/}/g' | \
-            sed 's/\*\*\*,$/},/g' | \
-            sed 's/^\*\*\*$/{/g')
-          
-          if echo "$FIXED_OUTPUT" | jq . >/dev/null 2>&1; then
-            echo "=== DEBUG: JSON is now valid after fixing ==="
-            {
-              echo "tofu-outputs<<EOF"
-              echo "$FIXED_OUTPUT"
-              echo "EOF"
-            } >> $GITHUB_OUTPUT
-          else
-            echo "=== DEBUG: JSON still invalid, using fallback ==="
-            {
+          {
               echo "tofu-outputs<<EOF"
               tofu output -json 2>/dev/null || echo "{}"
               echo "EOF"
-            } >> $GITHUB_OUTPUT
-          fi
-
-          echo "=== DEBUG: Content written to GITHUB_OUTPUT ==="
+          } >> $GITHUB_OUTPUT
 
       - name: Verify Output Capture
         if: ${{ inputs.run-apply }}
