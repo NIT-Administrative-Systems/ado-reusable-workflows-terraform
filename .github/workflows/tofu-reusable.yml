@@ -225,17 +225,3 @@ jobs:
               tofu output -json 2>/dev/null || echo "{}"
               echo "EOF"
           } >> $GITHUB_OUTPUT
-
-      - name: Verify Output Capture
-        if: ${{ inputs.run-apply }}
-        run: |
-          echo "=== VERIFY: Checking what was captured ==="
-          echo "Output value length: ${#OUTPUT}"
-          if [ -z "$OUTPUT" ]; then
-            echo "WARNING: Output is empty!"
-          else
-            echo "Output appears to be captured"
-            echo "First 200 chars: ${OUTPUT:0:200}"
-          fi
-        env:
-          OUTPUT: ${{ steps.apply.outputs.tofu-outputs }}
