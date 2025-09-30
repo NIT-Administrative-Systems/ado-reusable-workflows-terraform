@@ -74,16 +74,18 @@ jobs:
       - name: Secrets to ENV
         shell: bash
         run: |
-          for line in $(echo "${{ secrets.TF_SECRETS }}" | jq -c '.[]' ); do
-            name=$(echo $line | jq -r .name)
-            value=$(echo $line | jq -r .value)
-
-            echo "$name=$value" >> $GITHUB_ENV
-            
-            if [ -n "$value" ]; then
-              echo "::add-mask::$value"
-            fi
-          done
+          if [ -n "${{ secrets.TF_SECRETS }}" ]; then
+            for line in $(echo "${{ secrets.TF_SECRETS }}" | jq -c '.[]' ); do
+              name=$(echo $line | jq -r .name)
+              value=$(echo $line | jq -r .value)
+              
+              # Only set the variable if it has a value
+              if [ -n "$value" ]; then
+                echo "$name=$value" >> $GITHUB_ENV
+                echo "::add-mask::$value"
+              fi
+            done
+          fi
 
       - name: Tofu Format
         working-directory: ${{ inputs.iac-path }}
