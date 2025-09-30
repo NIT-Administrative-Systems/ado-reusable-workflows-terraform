@@ -219,7 +219,6 @@ jobs:
         if: ${{ inputs.run-apply }}
         working-directory: ${{ inputs.iac-path }}
         run: |
-          tofu apply -auto-approve -no-color
 
           echo "=== DEBUG: Attempting to capture outputs ==="
           RAW_OUTPUT=$(tofu output -json 2>&1) || echo "Command failed with exit code: $?"
