@@ -43,7 +43,7 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     outputs:
-      terraform-outputs: ${{ steps.plan.terraform-outputs }}
+      terraform-outputs: ${{ steps.apply.outputs.terraform-outputs }}
 
     steps:
       - name: Checkout Code
@@ -209,4 +209,8 @@ jobs:
         run: |
           terraform apply -auto-approve
         
-          echo "terraform-outputs=$(terraform output -json)" >> $GITHUB_OUTPUT
+          {
+          echo "terraform-outputs<<EOF"
+          terraform output -json 2>/dev/null || echo "{}"
+          echo "EOF"
+          } >> $GITHUB_OUTPUT
