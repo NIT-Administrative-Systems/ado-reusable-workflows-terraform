@@ -55,7 +55,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6.0.1
+        uses: actions/checkout@v6.0.2
 
       - name: Cache Comment Id
         if: github.event_name == 'pull_request'
