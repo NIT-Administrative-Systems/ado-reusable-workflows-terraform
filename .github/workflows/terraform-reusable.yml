@@ -47,18 +47,18 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.0
 
       - name: Cache Comment Id
         if: github.event_name == 'pull_request'
         id: cache-comment-id
-        uses: actions/cache@v4.2.4
+        uses: actions/cache@v5.0.5
         with:
           path: ./comment-cache
           key: pr-${{ github.event.number }}-comment-id${{ inputs.cache-key-suffix }}
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3.1.2
+        uses: hashicorp/setup-terraform@v4.0.1
         with:
           terraform_version: ${{ inputs.terraform-version }}
           terraform_wrapper: false
@@ -106,7 +106,7 @@ jobs:
       - name: Update PR Comment with Plan
         if: steps.cache-comment-id.outputs.cache-hit == 'true' && github.event_name == 'pull_request'
         id: update-pr-comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           result-encoding: string
@@ -151,7 +151,7 @@ jobs:
       - name: Create PR Comment with Plan
         if: steps.cache-comment-id.outputs.cache-hit != 'true' && github.event_name == 'pull_request'
         id: create-pr-comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           result-encoding: string
