@@ -97,7 +97,7 @@ jobs:
         uses: borchero/terraform-plan-comment@v3
         if: always() && github.event_name == 'pull_request'
         with:
-          header: 📝 OpenTofu Plan
+          header: "📝 OpenTofu Plan for `${{ inputs.iac-path }}`"
           terraform-cmd: 'tofu'
           working-directory: ${{ inputs.iac-path }}
           planfile: .planfile
