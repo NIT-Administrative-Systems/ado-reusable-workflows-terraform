@@ -91,7 +91,7 @@ jobs:
         id: plan
         working-directory: ${{ inputs.iac-path }}
         run: |
-          tofu plan -no-color -out=.planfile
+          tofu plan -no-color -out=.planfile -input=false
 
       - name: 📊 Comment OpenTofu Plan
         uses: borchero/terraform-plan-comment@v3
