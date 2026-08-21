@@ -94,7 +94,7 @@ jobs:
           tofu plan -no-color -out=.planfile -input=false
 
       - name: 📊 Comment OpenTofu Plan
-        uses: borchero/terraform-plan-comment@v3
+        uses: borchero/terraform-plan-comment@f585438eda2fa77c6f275994b92aeccd86ef3542
         if: always() && github.event_name == 'pull_request'
         with:
           header: "📝 OpenTofu Plan for `${{ inputs.iac-path }}`"
