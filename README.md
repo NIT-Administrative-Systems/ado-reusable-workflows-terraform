@@ -64,10 +64,8 @@ jobs:
          ]
 ```
 
-## Migration from Terraform to OpenTofu
-For projects migrating from Terraform to OpenTofu, please refer to the [ADOES OpenTofu Migration Guide](https://eacd.entapp.northwestern.edu/tech-stacks/opentofu/from-terraform.html).
-
 ## Features
+
 * Format check: validates code formatting
 * Init: Initializes the backend and providers
 * Validate: Validates the configuration syntax
