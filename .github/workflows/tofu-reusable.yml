@@ -57,19 +57,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v7.0.0
 
-      - name: Cache Comment Id
-        if: github.event_name == 'pull_request'
-        id: cache-comment-id
-        uses: actions/cache@v6.1.0
-        with:
-          path: ./comment-cache
-          key: pr-${{ github.event.number }}-comment-id${{ inputs.cache-key-suffix }}
-
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v2.0.2
         with:
           tofu_version: ${{ inputs.tofu-version }}
-          tofu_wrapper: false
 
       - name: Secrets to ENV
         shell: bash
@@ -99,119 +90,32 @@ jobs:
       - name: Tofu Plan
         id: plan
         working-directory: ${{ inputs.iac-path }}
-        # Captures the plan output
-        # Reads the output and prepares it for GitHub Actions
-        # Truncate based on GitHub Actions output size (65000)
         run: |
-          tofu plan -no-color -out=tfplan 2>&1 | tee plan_output.txt
-          OUTPUT=$(cat plan_output.txt)
-          
-          if [ ${#OUTPUT} -gt 65000 ]; then
-            OUTPUT="${OUTPUT:0:65000}... (truncated)"
-            echo "$OUTPUT" > plan_output.txt
-          fi
-          
-        continue-on-error: true
+          tofu plan -no-color -out=.planfile -input=false
 
-      - name: Update PR Comment with Plan
-        if: steps.cache-comment-id.outputs.cache-hit == 'true' && github.event_name == 'pull_request'
-        id: update-pr-comment
-        uses: actions/github-script@v9.0.0
+      - name: 📊 Comment OpenTofu Plan
+        uses: borchero/terraform-plan-comment@f585438eda2fa77c6f275994b92aeccd86ef3542
+        if: always() && github.event_name == 'pull_request'
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          result-encoding: string
-          script: |
-            const fs = require('fs')
-            let commentId = 0
-            try {
-              commentId = await fs.readFileSync('./comment-cache/comment-id', 'utf8')
-            } catch (err) {
-              console.log("err = " + err)
-              return 
-            }
-            console.log("Comment Id: " + commentId)
+          header: "📝 OpenTofu Plan for `${{ inputs.iac-path }}`"
+          terraform-cmd: 'tofu'
+          working-directory: ${{ inputs.iac-path }}
+          planfile: .planfile
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-            // Read the plan output directly from file
-            let planOutput = '';
-            try {
-              planOutput = fs.readFileSync('${{ inputs.iac-path }}/plan_output.txt', 'utf8');
-            } catch (err) {
-              console.log("Could not read plan output: " + err);
-              planOutput = 'Plan output not available';
-            }
+      - name: 🗑️ Clean Up Temporary Planfile
+        if: always()
+        run: rm -f .planfile
 
-            const output = `#### Tofu Checks for IAC Environment \`${{ inputs.iac-path }}\`
-            #### Tofu Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Tofu Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Tofu Validation 🤖\`${{ steps.validate.outcome }}\`
-            #### Tofu Plan 📖\`${{ steps.plan.outcome }}\`
-            <details>
-            <summary>Show Plan</summary>
-            \`\`\`
-            ${planOutput}
-            \`\`\`
-            </details>
-            *Auth: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
-            github.rest.issues.updateComment({
-               comment_id: commentId,
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               body: output
-            })
-
-      - name: Create PR Comment with Plan
-        if: steps.cache-comment-id.outputs.cache-hit != 'true' && github.event_name == 'pull_request'
-        id: create-pr-comment
-        uses: actions/github-script@v9.0.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          result-encoding: string
-          script: |
-            const fs = require('fs')
-      
-            // Read the plan output directly from file
-            let planOutput = '';
-            try {
-              planOutput = fs.readFileSync('${{ inputs.iac-path }}/plan_output.txt', 'utf8');
-            } catch (err) {
-              console.log("Could not read plan output: " + err);
-              planOutput = 'Plan output not available';
-            }
-
-            const output = `#### Tofu Checks for IAC Environment \`${{ inputs.iac-path }}\`
-            #### Tofu Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Tofu Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Tofu Validation 🤖\`${{ steps.validate.outcome }}\`
-            #### Tofu Plan 📖\`${{ steps.plan.outcome }}\`
-            <details>
-            <summary>Show Plan</summary>
-            \`\`\`
-            ${planOutput}
-            \`\`\`
-            </details>
-            *Auth: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
-             
-            const result = await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
-            console.log('Create comment Comment Id: ' + result.data.id)
-            return result.data.id
+      - name: 🔍 Check for OpenTofu Plan Errors
+        if: always() && steps.plan.outcome == 'failure'
+        run: |
+          echo "::error::OpenTofu plan failed. Check the plan output above for details."
+          exit 1
 
       - name: Tofu Status
         if: steps.plan.outcome == 'failure'
         run: exit 1
-
-      - name: Set cache
-        run: |
-            ls
-            pwd
-            mkdir -p comment-cache
-            cd comment-cache
-            echo "${{ steps.create-pr-comment.outputs.result }}" > comment-id
-            ls
 
       - name: Tofu Apply
         id: apply
@@ -219,9 +123,3 @@ jobs:
         working-directory: ${{ inputs.iac-path }}
         run: |
           tofu apply -auto-approve
-
-          {
-              echo "tofu-outputs<<EOF"
-              tofu output -json 2>/dev/null || echo "{}"
-              echo "EOF"
-          } >> $GITHUB_OUTPUT
