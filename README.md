@@ -1,8 +1,9 @@
 # ado-reusable-workflows-terraform
-Repository for storing and sharing the reusable OpenTofu workflow produced for ADO EACD.
 
+Repository for storing and sharing the reusable OpenTofu workflow produced for ADOES.
 
 ## OpenTofu
+
 This reusable workflow combines all the steps for running your OpenTofu IAC in a single step.
 
 ## What's New
@@ -12,8 +13,8 @@ See the [CHANGELOG.md](./CHANGELOG.md) file.
 ## Usage
 
 ### Pre-requisites
-Create a workflow `.yml` file in your repositories `.github/workflows` directory. An [example workflow](#example-workflow) is available below. For more information, reference the GitHub Help Documentation for [Creating a workflow file](https://help.github.com/en/articles/configuring-a-workflow#creating-a-workflow-file).
 
+Create a workflow `.yml` file in your repositories `.github/workflows` directory. An [example workflow](#example-workflow) is available below. For more information, reference the GitHub Help Documentation for [Creating a workflow file](https://help.github.com/en/articles/configuring-a-workflow#creating-a-workflow-file).
 
 ### Inputs
 
