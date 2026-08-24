@@ -1,24 +1,20 @@
 # ado-reusable-workflows-terraform
-Repository for storing and sharing the reusable OpenTofu workflow produced for ADO EACD.
 
-> **Deprecation notice:** The legacy `terraform-reusable.yml` workflow was removed in `v0.18.0` (August 2026), following
-> a deprecation notice to ADOES in June 2026 and confirmation that no repository in the NIT-Administrative-Systems
-> organization still referenced it. Use `tofu-reusable.yml` instead. If you need the legacy workflow while migrating,
-> If you need the legacy workflow while migrating, pin to `@v0.17.0` and see
-> [Migration from Terraform to OpenTofu](#migration-from-terraform-to-opentofu) below.
+Repository for storing and sharing the reusable OpenTofu workflow produced for ADOES.
 
 ## OpenTofu
+
 This reusable workflow combines all the steps for running your OpenTofu IAC in a single step.
 
 ## What's New
-- **OpenTofu support** with state encryption for enhanced security
-- **Legacy Terraform workflow removed** — see the deprecation notice above
+
+See the [CHANGELOG.md](./CHANGELOG.md) file.
 
 ## Usage
 
 ### Pre-requisites
-Create a workflow `.yml` file in your repositories `.github/workflows` directory. An [example workflow](#example-workflow) is available below. For more information, reference the GitHub Help Documentation for [Creating a workflow file](https://help.github.com/en/articles/configuring-a-workflow#creating-a-workflow-file).
 
+Create a workflow `.yml` file in your repositories `.github/workflows` directory. An [example workflow](#example-workflow) is available below. For more information, reference the GitHub Help Documentation for [Creating a workflow file](https://help.github.com/en/articles/configuring-a-workflow#creating-a-workflow-file).
 
 ### Inputs
 
@@ -68,10 +64,8 @@ jobs:
          ]
 ```
 
-## Migration from Terraform to OpenTofu
-For projects migrating from Terraform to OpenTofu, please refer to the [ADOES OpenTofu Migration Guide](https://eacd.entapp.northwestern.edu/tech-stacks/opentofu/from-terraform.html).
-
 ## Features
+
 * Format check: validates code formatting
 * Init: Initializes the backend and providers
 * Validate: Validates the configuration syntax
