@@ -55,10 +55,10 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup OpenTofu
-        uses: opentofu/setup-opentofu@v2.0.2
+        uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with:
           tofu_version: ${{ inputs.tofu-version }}
 
@@ -94,7 +94,7 @@ jobs:
           tofu plan -no-color -out=.planfile -input=false
 
       - name: 📊 Comment OpenTofu Plan
-        uses: borchero/terraform-plan-comment@f585438eda2fa77c6f275994b92aeccd86ef3542
+        uses: borchero/terraform-plan-comment@f585438eda2fa77c6f275994b92aeccd86ef3542 # v3.2.0
         if: always() && github.event_name == 'pull_request'
         with:
           header: "📝 OpenTofu Plan for `${{ inputs.iac-path }}`"
