@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [v1.0.1] - 2026-11-23
+
+### Changed
+
+- `tofu-reusable.yml` uses `actions/checkout` v7.0.1 (was v7.0.0).
+- Every action in `tofu-reusable.yml` is pinned to a commit SHA, with its version in a comment.
+
 ## [v1.0.0] - 2026-08-24
 
 ### Changed
